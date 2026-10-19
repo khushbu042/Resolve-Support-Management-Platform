@@ -1,30 +1,36 @@
-from enum import Enum
-from app.core.permissions import Permission, ROLE_PERMISSIONS
-
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import SECRET_KEY
-from app.database import get_db
-from app.models import User
+from app.core.permissions import Permission, ROLE_PERMISSIONS
+from app.core.security import decode_access_token
+from app.core.token_blacklist import is_token_revoked
+from app.db.database import get_db
+from app.database_model.user_model import User
+
 
 security = HTTPBearer()
 
 
-def get_current_user(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     token = credentials.credentials
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        payload = decode_access_token(token)
+        jti = payload.get("jti")
+        if jti and await is_token_revoked(str(jti)):
+            raise HTTPException(status_code=401, detail="Token has been revoked")
 
         user_id = payload.get("user_id")
 
-        current_user = db.query(User).filter(User.id == user_id).first()
+        select_user = select(User).where(User.id == user_id)
+        result = await db.execute(select_user)
+        current_user = result.scalar_one_or_none()
 
         if not current_user:
             raise HTTPException(status_code=401, detail="User not found")

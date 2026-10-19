@@ -2,17 +2,20 @@ import logging
 import smtplib
 from email.message import EmailMessage
 
-from app.config import (
-    SMTP_FROM,
-    SMTP_HOST,
-    SMTP_PASSWORD,
-    SMTP_PORT,
-    SMTP_USE_TLS,
-    SMTP_USER,
-)
+from app.core.settings import get_settings
+import structlog
 
-logger = logging.getLogger(__name__)
+settings = get_settings()
 
+logger = structlog.get_logger(__name__)
+
+
+SMTP_HOST = settings.smtp_host
+SMTP_PORT = settings.smtp_port
+SMTP_USER = settings.smtp_user
+SMTP_PASSWORD = settings.smtp_password
+SMTP_USE_TLS = settings.smtp_use_tls
+SMTP_FROM = settings.smtp_from
 
 def send_email(to_email: str, subject: str, body: str) -> None:
     if not SMTP_HOST:

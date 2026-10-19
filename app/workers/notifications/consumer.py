@@ -3,19 +3,21 @@ import logging
 
 from aio_pika import DeliveryMode, IncomingMessage, Message
 
-from app.config import NOTIFICATION_MAX_RETRIES
-from app.infrastructure.rabbitmq.client import get_connection
+from app.core.settings import get_settings
+from app.infrastructure.rabbitmq.rabbitmq_client import get_connection
 from app.infrastructure.rabbitmq.serializer import dumps, loads
 from app.infrastructure.rabbitmq.topology import (
     TICKET_ASSIGNED_RETRY_ROUTING_KEY,
     declare_topology,
     get_retry_exchange,
 )
-from app.schemas.schemas import TicketAssignedEvent
+from app.api.schemas.ticket import TicketAssignedEvent
 from app.workers.notifications.handlers import handle_ticket_assigned
+import structlog
 
-logger = logging.getLogger(__name__)
-
+settings = get_settings()
+NOTIFICATION_MAX_RETRIES = settings.notification_max_retries
+logger = structlog.get_logger(__name__)
 
 async def _republish_for_retry(message: IncomingMessage, event: TicketAssignedEvent) -> None:
     retries = int((message.headers or {}).get("x-retry", 0)) + 1

@@ -1,69 +1,105 @@
 import time
 import uuid
+from contextlib import asynccontextmanager
+import structlog
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.core.settings import get_settings
 
-from app.routers import ticket_router, user_router
-from app.infrastructure.redis.client import redis_client
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(user_router)
-app.include_router(ticket_router)
-
-@app.get("/redis-health")
-async def redis_health():
-    response = await redis_client.ping()
-
-    return {
-        "redis": response
-    }
+from app.core.logging import setup_logging
+from app.db.database import close_database, connect_database
+from app.db.redis_client import close_redis, check_redis_connection
+from app.infrastructure.rabbitmq.rabbitmq_client import close_rabbitmq, check_rabbitmq_connection
 
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    request_id = request.headers.get("X-Request-ID")
+# ── Routers imports ───────────────────────────────────────────────
+from app.api.v1.routers import health
+from app.api.v1.routers import auth
+# from app.api.v1.routers import user
+from app.api.v1.routers import ticket
+from app.api.v1.routers import ticket_attachments
 
-    if not request_id:
-        request_id = str(uuid.uuid4())
 
-    start_time = time.perf_counter()
-    response = await call_next(request)
-    process_time = time.perf_counter() - start_time
+logger = structlog.get_logger()
+settings = get_settings()
 
-    response.headers["X-Request-ID"] = request_id
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
 
-    print(
-        f"[{request_id}]"
-        f"{request.method}  {request.url.path} "
-        f"Completed in {process_time:.4f}s"
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application startup and shutdown.
+    Infrastructure connections are checked and released here.
+    """
+ 
+    logger.info("Application starting")
+
+    # ── Startup: Connect infrastructure services ────────────────────────────────
+    # ── Step 1: Database connection ───────────────────────────────
+    logger.info("Connecting to PostgreSQL")
+    await connect_database()
+    logger.info("PostgreSQL connected successfully")
+
+    # ── Step 2: Redis connection ───────────────────────────────
+    logger.info("Connecting to Redis")
+    (redis_ok, redis_detail) = await check_redis_connection()
+    if not redis_ok:
+        logger.error("Redis connection failed", error=redis_detail)
+        raise Exception(f"Redis connection failed: {redis_detail}")
+    logger.info("Redis connected successfully")
+
+    # ── Step 3: RabbitMQ connection ───────────────────────────────
+    logger.info("Connecting to RabbitMQ")
+    (rabbitmq_ok, rabbitmq_detail) = await check_rabbitmq_connection()
+    if not rabbitmq_ok:
+        logger.error("RabbitMQ connection failed", error=rabbitmq_detail)
+        raise Exception(f"RabbitMQ connection failed: {rabbitmq_detail}")
+    logger.info("RabbitMQ connected successfully")
+
+    logger.info("All infrastructure connections established")
+    yield
+
+    # ── Shutdown: Release infrastructure connections ────────────────────────────────
+    await close_database()
+    await close_redis()
+    await close_rabbitmq()
+
+    logger.info("All infrastructure connections closed")
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        description=settings.app_description,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
-    return response
-
-
-@app.middleware("http")
-async def error_handling_middleware(request: Request, call_next):
-
-    try:
-        response = await call_next(request)
-        return response
-
-    except Exception as exc:
-        print(f"Unexpected error: {exc}")
-
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"},
+    # ── CORS ──────────────────────────────────────────────────
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=[
+            "X-Request-ID",
+            "X-Correlation-ID",
+            "X-Process-Time-Ms",
+        ],
     )
+
+
+    # ── Routers ───────────────────────────────────────────────
+    app.include_router(health.router, prefix="/api/v1")
+    app.include_router(auth.router, prefix="/api/v1")
+    # app.include_router(user.router, prefix="/api/v1")
+    app.include_router(ticket.router, prefix="/api/v1")
+    app.include_router(ticket_attachments.router, prefix="/api/v1")
+
+    return app
+
+
+app = create_app()

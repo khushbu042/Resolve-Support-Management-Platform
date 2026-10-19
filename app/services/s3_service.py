@@ -1,41 +1,39 @@
 import boto3
 from botocore.exceptions import ClientError
+from functools import lru_cache
 
-AWS_REGION = "us-east-1"
-BUCKET_NAME = "fastapi-ticket-attachments-khushbu-381492289538-us-east-1-an"
+from app.core.settings import get_settings
 
-Session = boto3.Session(profile_name="fastapi-dev")
+settings = get_settings()
+AWS_REGION = settings.s3_region
+BUCKET_NAME = settings.s3_bucket_name
 
-s3_client = Session.client(
-    "s3",
-    region_name=AWS_REGION,
-)
+@lru_cache(maxsize=1)
+def get_s3_client():
+    return boto3.client(
+        "s3",
+        region_name=AWS_REGION,
+    )
 
 
-def upload_file(file: str, object_key: str):
+async def upload_file(file: str, object_key: str):
+    s3_client = get_s3_client()
     s3_client.upload_fileobj(
         file,
         BUCKET_NAME,
         object_key,
     )
 
-
-def download_file(object_key: str, file_path: str):
-    s3_client.download_file(
+async def download_file(object_key: str, file_path: str):
+    s3_client = get_s3_client()
+    await s3_client.download_file(
         BUCKET_NAME,
         object_key,
         file_path,
     )
 
-# def get_file(object_key: str):
-#     response = s3_client.get_object(
-#         BUCKET_NAME,
-#         object_key,
-#     )
-
-#     return response
-
-def get_file(object_key: str):
+async def get_file(object_key: str):
+    s3_client = get_s3_client()
     try:
         response = s3_client.get_object(
             Bucket=BUCKET_NAME,
@@ -51,13 +49,15 @@ def get_file(object_key: str):
         raise
 
 
-def delete_file(object_key: str):
+async def delete_file(object_key: str):
+    s3_client = get_s3_client()
     s3_client.delete_object(
         Bucket=BUCKET_NAME,
         Key=object_key,
     )
 
-def generate_download_url(object_key: str, expires_in: int = 3600):
+async def generate_download_url(object_key: str, expires_in: int = 3600):
+    s3_client = get_s3_client()
     return s3_client.generate_presigned_url(
         "get_object",
         Params={

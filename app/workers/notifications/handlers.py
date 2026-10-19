@@ -1,4 +1,4 @@
-from app.schemas.schemas import TicketAssignedEvent
+from app.api.schemas.ticket import TicketAssignedEvent
 from app.services.email_service import send_email
 
 

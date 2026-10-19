@@ -5,88 +5,31 @@ from sqlalchemy import (
 from datetime import datetime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
-from app.database import Base
+from app.db.database import Base
 import enum
 
-
-# ---------- ENUMS ----------
-class UserRole(str, enum.Enum):
-    customer = "customer"
-    agent = "agent"
-    admin = "admin"
-
+# ── Ticket status ───────────────────────────────────────────────
 class TicketStatus(str, enum.Enum):
     open = "open"
     pending = "pending"
     resolved = "resolved"
     closed = "closed"
 
+# ── Ticket priority ───────────────────────────────────────────────
 class TicketPriority(str, enum.Enum):
     low = "low"
     medium = "medium"
     high = "high"
     urgent = "urgent"
 
+# ── Attachment status ───────────────────────────────────────────────
 class AttachmentStatus(str, enum.Enum):
     uploading = "uploading"
     scanning = "scanning"
     ready = "ready"
     rejected = "rejected"
 
-
-# ---------- USER ----------
-class User(Base):
-    __tablename__ = "users"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-    )
-    
-    email: Mapped[str] = mapped_column(
-        String(255),
-        unique=True,
-        index=True,
-        nullable=False,
-    )
-    
-    password_hash: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-    )
-
-    role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole),
-        nullable=False,
-    )
-    
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        server_default=func.now(),
-        nullable=False,
-    )
-
-    # Relationship
-    # tickets this user CREATED (as customer)
-    tickets_created = relationship(
-        "Ticket",
-        foreign_keys="Ticket.customer_id",
-        back_populates="customer"
-    )
-
-    # tickets this user is ASSIGNED to (as agent)
-    tickets_assigned = relationship(
-        "Ticket",
-        foreign_keys="Ticket.assigned_agent_id",
-        back_populates="assigned_agent"
-    )
-
-    comments = relationship("TicketComment", back_populates="sender")
-    attachments = relationship("TicketAttachment", back_populates="uploader")
-
-# ---------- TICKET ---------- 
+# ── Ticket model ───────────────────────────────────────────────
 class Ticket(Base):
     __tablename__ = "tickets"
 
@@ -129,11 +72,6 @@ class Ticket(Base):
         ForeignKey("users.id"),
         nullable=True,
         index=True,
-    )
-
-    sla_deadline: Mapped[datetime | None] = mapped_column(
-        DateTime,
-        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

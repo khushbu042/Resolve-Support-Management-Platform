@@ -1,22 +1,22 @@
-import asyncio
-import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
 import aio_pika
 from aio_pika import DeliveryMode, Message
 
-from app.config import RABBITMQ_URL
+from app.core.settings import get_settings
 from app.infrastructure.rabbitmq.serializer import dumps
 from app.infrastructure.rabbitmq.topology import (
     TICKET_ASSIGNED_ROUTING_KEY,
     declare_topology,
     get_events_exchange,
 )
-from app.models import Ticket, User
-from app.schemas.schemas import TicketAssignedEvent
+from app.database_model.ticket_model import Ticket
+from app.database_model.user_model import User
+from app.api.schemas.ticket import TicketAssignedEvent
 
-logger = logging.getLogger(__name__)
+settings = get_settings()
+RABBITMQ_URL = settings.rabbitmq_url
 
 
 def build_ticket_assigned_event(
@@ -54,18 +54,10 @@ async def publish_ticket_assigned_async(event: TicketAssignedEvent) -> None:
         )
 
 
-def publish_ticket_assigned(
+async def publish_ticket_assigned(
     ticket: Ticket,
     agent: User,
     assigned_by_id: int | None = None,
 ) -> None:
     event = build_ticket_assigned_event(ticket, agent, assigned_by_id)
-    try:
-        asyncio.run(publish_ticket_assigned_async(event))
-    except RuntimeError:
-        asyncio.get_event_loop().create_task(publish_ticket_assigned_async(event))
-    except Exception:
-        logger.exception(
-            "Failed to publish ticket.assigned event for ticket_id=%s",
-            ticket.id,
-        )
+    await publish_ticket_assigned_async(event)

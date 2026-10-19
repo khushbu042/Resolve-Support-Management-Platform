@@ -2,7 +2,7 @@ import time
 import uuid
 from pathlib import Path
 
-from app.infrastructure.redis.client import redis_client
+from app.db.redis_client import get_redis_client
 
 
 USER_LIMIT = 5
@@ -37,6 +37,7 @@ async def check_login_rate_limit(
     ip_window_ms = IP_WINDOW * 1000
 
 
+    redis_client = get_redis_client()
     result = await redis_client.eval(
         LOGIN_RATE_LIMIT_SCRIPT,
         2,
@@ -64,6 +65,7 @@ async def check_ip_rate_limit(ip_address: str):
     now = int(time.time() * 1000)
     window_start = now - (IP_WINDOW * 1000)
 
+    redis_client = get_redis_client()
     await redis_client.zremrangebyscore(
         key,
         "-inf",
@@ -94,6 +96,7 @@ async def record_failed_login(
 
     request_id = str(uuid.uuid4())
 
+    redis_client = get_redis_client()
     await redis_client.zadd(
         ip_key,
         {
