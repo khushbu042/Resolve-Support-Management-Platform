@@ -10,16 +10,16 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.rabbitmq.publisher import publish_ticket_assigned
 from fastapi.responses import StreamingResponse
-from app.database_model.user_model import User
+from app.models.user_model import User
 from sqlalchemy import select
-from app.database_model.ticket_model import (
+from app.models.ticket_model import (
     AttachmentStatus,
     Ticket,
     TicketAttachment,
     TicketPriority,
     TicketStatus,
 )
-from app.database_model.user_model import User
+from app.models.user_model import User
 from app.api.schemas.ticket import (
     CreateTicketRequest,
     UpdateTicketRequest,

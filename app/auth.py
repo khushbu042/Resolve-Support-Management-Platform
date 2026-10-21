@@ -8,7 +8,7 @@ from app.core.permissions import Permission, ROLE_PERMISSIONS
 from app.core.security import decode_access_token
 from app.core.token_blacklist import is_token_revoked
 from app.db.database import get_db
-from app.database_model.user_model import User
+from app.models.user_model import User
 
 
 security = HTTPBearer()

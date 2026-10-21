@@ -1,6 +1,6 @@
 # app/api/schemas/user.py
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
-from app.database_model.user_model import UserRole
+from app.models.user_model import UserRole
 
 class UserRegisterRequest(BaseModel):
     name: str = Field(..., min_length=1)

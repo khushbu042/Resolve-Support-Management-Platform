@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import Permission, get_current_user, require_permission
 from app.db.database import get_db
 from app.services.ticket_attachments_service import upload_attachment, get_ticket_attachments, download_attachment
-from app.database_model.user_model import User
+from app.models.user_model import User
 from app.api.schemas.ticket import (
     TicketAttachmentDownloadResponse,
     TicketAttachmentResponse,

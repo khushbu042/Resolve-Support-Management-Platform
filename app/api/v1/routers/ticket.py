@@ -15,7 +15,7 @@ from app.services.ticket_service import (
     update_ticket,
     assign_ticket,
 )
-from app.database_model.user_model import User
+from app.models.user_model import User
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
 

@@ -5,8 +5,8 @@ from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, UploadFile
-from app.database_model.ticket_model import Ticket, TicketAttachment
-from app.database_model.user_model import User
+from app.models.ticket_model import Ticket, TicketAttachment
+from app.models.user_model import User
 from app.core.permissions import Permission
 from app.api.schemas.common import MessageResponse
 from app.api.schemas.ticket import (

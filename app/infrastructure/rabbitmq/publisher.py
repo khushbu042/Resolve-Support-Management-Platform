@@ -11,8 +11,8 @@ from app.infrastructure.rabbitmq.topology import (
     declare_topology,
     get_events_exchange,
 )
-from app.database_model.ticket_model import Ticket
-from app.database_model.user_model import User
+from app.models.ticket_model import Ticket
+from app.models.user_model import User
 from app.api.schemas.ticket import TicketAssignedEvent
 
 settings = get_settings()

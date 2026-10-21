@@ -6,13 +6,18 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "aio-pika>=10.0.1",
+    "boto3>=1.43.116",
     "email-validator>=2.3.0",
     "fastapi>=0.139.2",
     "psycopg[binary]>=3.3.4",
     "pwdlib[argon2]>=0.3.0",
+    "pydantic-settings>=2.16.1",
     "pyjwt>=2.13.0",
     "python-dotenv>=1.2.2",
+    "python-multipart>=0.0.32",
+    "redis>=8.1.0",
     "sqlalchemy>=2.0.51",
+    "structlog>=26.1.0",
     "uvicorn>=0.51.0",
 ]
 

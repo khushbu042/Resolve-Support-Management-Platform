@@ -20,7 +20,7 @@ from app.api.schemas.user import (
 )
 from app.services.rate_limit.login import check_login_rate_limit, record_failed_login, check_ip_rate_limit
 from app.db.redis_client import get_redis_client as redis_client
-from app.database_model.user_model import User, UserRole
+from app.models.user_model import User, UserRole
 
 password_hash = PasswordHash.recommended()
 settings = get_settings()

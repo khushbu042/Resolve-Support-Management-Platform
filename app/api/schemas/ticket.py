@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from app.database_model.ticket_model import (
+from app.models.ticket_model import (
     AttachmentStatus,
     TicketPriority,
     TicketStatus,
