@@ -44,5 +44,6 @@ line_length = 88
 dev = [
     "black>=26.10.1",
     "isort>=9.0.2",
+    "pytest>=9.1.1",
 ]
 
