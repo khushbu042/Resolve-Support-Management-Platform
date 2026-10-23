@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
 
     # ── Step 2: Redis connection ───────────────────────────────
     logger.info("Connecting to Redis")
-    (redis_ok, redis_detail) = await check_redis_connection()
+    redis_ok, redis_detail = await check_redis_connection()
     if not redis_ok:
         logger.error("Redis connection failed", error=redis_detail)
         raise Exception(f"Redis connection failed: {redis_detail}")
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
 
     # ── Step 3: RabbitMQ connection ───────────────────────────────
     logger.info("Connecting to RabbitMQ")
-    (rabbitmq_ok, rabbitmq_detail) = await check_rabbitmq_connection()
+    rabbitmq_ok, rabbitmq_detail = await check_rabbitmq_connection()
     if not rabbitmq_ok:
         logger.error("RabbitMQ connection failed", error=rabbitmq_detail)
         raise Exception(f"RabbitMQ connection failed: {rabbitmq_detail}")

@@ -8,6 +8,7 @@ Redis is used for:
 
 We use the async redis client so it never blocks the event loop.
 """
+
 import redis.asyncio as aioredis
 import structlog
 

@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     # ── Application ───────────────────────────────────────────
     app_name: str = "Resolve Support Management"
     app_version: str = "1.0.0"
-    app_description: str = "Support Management is a platform for managing support tickets and resolving issues."
+    app_description: str = (
+        "Support Management is a platform for managing support tickets and resolving issues."
+    )
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
 

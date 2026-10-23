@@ -10,6 +10,7 @@ Every log line automatically includes:
 In development: colored, human-readable output
 In production: JSON format for log aggregation (CloudWatch, Loki, etc.)
 """
+
 import logging
 
 import structlog

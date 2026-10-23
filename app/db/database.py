@@ -6,6 +6,7 @@ We use async SQLAlchemy so database queries never block the event loop.
 This is critical for a FastAPI application that needs to handle
 many concurrent requests.
 """
+
 import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
