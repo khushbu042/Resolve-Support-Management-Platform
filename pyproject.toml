@@ -40,3 +40,9 @@ target-version = ["py311"]
 profile = "black"
 line_length = 88
 
+[dependency-groups]
+dev = [
+    "black>=26.10.1",
+    "isort>=9.0.2",
+]
+
