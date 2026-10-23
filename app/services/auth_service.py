@@ -1,26 +1,27 @@
 import jwt
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from pwdlib import PasswordHash
-from fastapi import Request
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import create_access_token, decode_access_token
-from app.core.settings import get_settings
-from app.core.token_blacklist import is_token_revoked, revoke_token
 from app.api.schemas.user import (
-    LoginRequest, 
-    UserRegisterRequest, 
+    LoginRequest,
     LoginResponse,
     LoginResponseData,
     LogoutResponse,
+    UserRegisterRequest,
     UserResponse,
 )
-from app.services.rate_limit.login import check_login_rate_limit, record_failed_login, check_ip_rate_limit
+from app.core.security import create_access_token, decode_access_token
+from app.core.settings import get_settings
+from app.core.token_blacklist import is_token_revoked, revoke_token
 from app.db.redis_client import get_redis_client as redis_client
 from app.models.user_model import User, UserRole
+from app.services.rate_limit.login import (
+    check_ip_rate_limit,
+    check_login_rate_limit,
+    record_failed_login,
+)
 
 password_hash = PasswordHash.recommended()
 settings = get_settings()
@@ -52,8 +53,8 @@ async def _active_payload(token: str) -> dict:
         raise HTTPException(status_code=401, detail="Token has been revoked")
     return payload
 
-async def register_user(user: UserRegisterRequest, db: AsyncSession):
 
+async def register_user(user: UserRegisterRequest, db: AsyncSession):
     """
     Register a new user with the given email and password
     """
@@ -71,20 +72,20 @@ async def register_user(user: UserRegisterRequest, db: AsyncSession):
         name=user.name,
         email=user.email,
         password=hashed_password,
-        role=UserRole.agent,
+        role=UserRole.customer,
     )
-
 
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
 
-    return userResponse(
+    return UserResponse(
         id=new_user.id,
         name=new_user.name,
         email=new_user.email,
         role=new_user.role,
     )
+
 
 async def login_user(user: LoginRequest, db: AsyncSession, ip_address: str):
     """
@@ -96,7 +97,6 @@ async def login_user(user: LoginRequest, db: AsyncSession, ip_address: str):
     existing_user = result.scalar_one_or_none()
 
     if not existing_user:
-
         rate_limit = await check_ip_rate_limit(ip_address)
         if not rate_limit["allowed"]:
             raise HTTPException(
@@ -114,8 +114,7 @@ async def login_user(user: LoginRequest, db: AsyncSession, ip_address: str):
         )
 
     rate_limit = await check_login_rate_limit(
-        user_id=existing_user.id,
-        ip_address=ip_address
+        user_id=existing_user.id, ip_address=ip_address
     )
 
     if not rate_limit["allowed"]:
@@ -125,10 +124,7 @@ async def login_user(user: LoginRequest, db: AsyncSession, ip_address: str):
         )
 
     if not password_hash.verify(user.password, existing_user.password):
-        await record_failed_login(
-            user_id=existing_user.id,
-            ip_address=ip_address
-        )
+        await record_failed_login(user_id=existing_user.id, ip_address=ip_address)
         raise HTTPException(status_code=401, detail="Password is incorrect")
 
     token = create_access_token(
@@ -144,6 +140,7 @@ async def login_user(user: LoginRequest, db: AsyncSession, ip_address: str):
             token_type="Bearer",
         ),
     )
+
 
 async def logout_user(request: Request, db: AsyncSession):
     payload = await _active_payload(_bearer_token(request))

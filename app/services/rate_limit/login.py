@@ -4,7 +4,6 @@ from pathlib import Path
 
 from app.db.redis_client import get_redis_client
 
-
 USER_LIMIT = 5
 USER_WINDOW = 2 * 60
 
@@ -23,6 +22,7 @@ LUA_SCRIPT_PATH = (
 with open(LUA_SCRIPT_PATH, "r") as file:
     LOGIN_RATE_LIMIT_SCRIPT = file.read()
 
+
 async def check_login_rate_limit(
     user_id: int,
     ip_address: str,
@@ -35,7 +35,6 @@ async def check_login_rate_limit(
 
     user_window_ms = USER_WINDOW * 1000
     ip_window_ms = IP_WINDOW * 1000
-
 
     redis_client = get_redis_client()
     result = await redis_client.eval(
@@ -58,6 +57,7 @@ async def check_login_rate_limit(
         "allowed": allowed,
         "reason": reason,
     }
+
 
 async def check_ip_rate_limit(ip_address: str):
     key = f"login:rate:ip:{ip_address}"
@@ -113,11 +113,3 @@ async def record_failed_login(
                 request_id: now,
             },
         )
-
-
-
-
-
-
-
-    

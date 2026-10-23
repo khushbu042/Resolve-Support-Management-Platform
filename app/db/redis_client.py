@@ -30,7 +30,7 @@ def get_redis_client() -> aioredis.Redis:
         _redis_client = aioredis.from_url(
             settings.redis_url,
             encoding="utf-8",
-            decode_responses=True,   # Return strings, not bytes
+            decode_responses=True,  # Return strings, not bytes
             socket_connect_timeout=5,
             socket_timeout=5,
             retry_on_timeout=True,

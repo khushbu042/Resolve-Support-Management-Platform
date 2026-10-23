@@ -18,7 +18,7 @@ RETRY_TTL_MS = 10_000
 async def declare_topology(channel: AbstractChannel) -> AbstractQueue:
     events_exchange = await channel.declare_exchange(
         TICKETS_EVENTS_EXCHANGE,
-        ExchangeType.TOPIC, 
+        ExchangeType.TOPIC,
         durable=True,
     )
     retry_exchange = await channel.declare_exchange(
@@ -48,7 +48,9 @@ async def declare_topology(channel: AbstractChannel) -> AbstractQueue:
             "x-dead-letter-routing-key": TICKET_ASSIGNED_ROUTING_KEY,
         },
     )
-    await retry_queue.bind(retry_exchange, routing_key=TICKET_ASSIGNED_RETRY_ROUTING_KEY)
+    await retry_queue.bind(
+        retry_exchange, routing_key=TICKET_ASSIGNED_RETRY_ROUTING_KEY
+    )
 
     dlq = await channel.declare_queue(NOTIFICATIONS_TICKET_ASSIGNED_DLQ, durable=True)
     await dlq.bind(dlx_exchange)

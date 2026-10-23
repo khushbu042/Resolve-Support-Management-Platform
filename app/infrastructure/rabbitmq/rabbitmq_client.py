@@ -4,7 +4,6 @@ from aio_pika.abc import AbstractRobustConnection
 
 from app.core.settings import get_settings
 
-
 settings = get_settings()
 logger = structlog.get_logger()
 _connection: AbstractRobustConnection | None = None
@@ -16,6 +15,7 @@ async def get_connection() -> AbstractRobustConnection:
         _connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     return _connection
 
+
 async def check_rabbitmq_connection() -> bool:
     try:
         connection = await get_connection()
@@ -23,6 +23,7 @@ async def check_rabbitmq_connection() -> bool:
     except Exception as e:
         logger.error(f"Error checking RabbitMQ connection: {e}")
         return False
+
 
 async def close_rabbitmq() -> None:
     global _connection

@@ -1,31 +1,28 @@
-from pathlib import Path
 import os
-
+from pathlib import Path
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+
 from fastapi import HTTPException, UploadFile
-from app.models.ticket_model import Ticket, TicketAttachment
-from app.models.user_model import User
-from app.core.permissions import Permission
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.schemas.common import MessageResponse
 from app.api.schemas.ticket import (
+    AttachmentStatus,
     TicketAttachmentDownloadResponse,
     TicketAttachmentResponse,
-    AttachmentStatus,
 )
+from app.core.permissions import Permission
 from app.core.settings import get_settings
-from app.services.s3_service import (
-    upload_file, 
-    delete_file,
-    generate_download_url,
-)
-
+from app.models.ticket_model import Ticket, TicketAttachment
+from app.models.user_model import User
+from app.services.s3_service import delete_file, generate_download_url, upload_file
 
 settings = get_settings()
 ALLOWED_FILES = settings.allowed_files
 MAX_FILE_SIZE = settings.max_file_size
 CHUNK_SIZE = settings.chunk_size
+
 
 async def upload_attachment(
     ticket_id: int,
@@ -40,10 +37,8 @@ async def upload_attachment(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket Not found")
 
-    
     original_filename = file.filename or ""
     extension = os.path.splitext(original_filename)[1].lower()
-    
 
     if extension not in ALLOWED_FILES:
         raise HTTPException(status_code=400, detail="Unsupported file extension")
@@ -110,7 +105,6 @@ async def get_ticket_attachments(
     current_user: User,
     db: AsyncSession,
 ):
-
     select_ticket = select(Ticket).filter(Ticket.id == ticket_id)
     result = await db.execute(select_ticket)
     ticket = result.scalar_one_or_none()
@@ -121,7 +115,9 @@ async def get_ticket_attachments(
             detail="Ticket not found",
         )
 
-    select_attachments = select(TicketAttachment).filter(TicketAttachment.ticket_id == ticket_id)
+    select_attachments = select(TicketAttachment).filter(
+        TicketAttachment.ticket_id == ticket_id
+    )
     result = await db.execute(select_attachments)
     attachments = result.scalars().all()
 
@@ -130,12 +126,15 @@ async def get_ticket_attachments(
         for attachment in attachments
     ]
 
+
 async def download_attachment(
     attachment_id: int,
     current_user: User,
     db: AsyncSession,
 ):
-    select_attachment = select(TicketAttachment).filter(TicketAttachment.id == attachment_id)
+    select_attachment = select(TicketAttachment).filter(
+        TicketAttachment.id == attachment_id
+    )
     result = await db.execute(select_attachment)
     attachment = result.scalar_one_or_none()
 
@@ -153,12 +152,15 @@ async def download_attachment(
         download_url=download_url,
     )
 
+
 async def delete_attachment(
     attachment_id: int,
     current_user: User,
     db: AsyncSession,
 ):
-    select_attachment = select(TicketAttachment).filter(TicketAttachment.id == attachment_id)
+    select_attachment = select(TicketAttachment).filter(
+        TicketAttachment.id == attachment_id
+    )
     result = await db.execute(select_attachment)
     attachment = result.scalar_one_or_none()
 

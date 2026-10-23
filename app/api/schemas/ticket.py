@@ -1,10 +1,9 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from app.models.ticket_model import (
-    AttachmentStatus,
-    TicketPriority,
-    TicketStatus,
-)
+
+from app.models.ticket_model import AttachmentStatus, TicketPriority, TicketStatus
+
 
 class TicketAttachmentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -35,14 +34,17 @@ class CreateTicketRequest(BaseModel):
     description: str = Field(..., min_length=1)
     priority: TicketPriority = TicketPriority.medium
 
+
 class AssignTicketRequest(BaseModel):
     assignee: int
-   
+
+
 class UpdateTicketRequest(BaseModel):
     title: str | None = None
-    description: str | None = None 
+    description: str | None = None
     status: TicketStatus | None = None
     priority: TicketPriority | None = None
+
 
 class TicketResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -54,6 +56,7 @@ class TicketResponse(BaseModel):
     priority: TicketPriority
     customer_id: int
     assigned_agent_id: int | None = None
+
 
 class TicketListResponse(BaseModel):
     page: int
@@ -72,6 +75,7 @@ class BulkUpdateTicketRequest(BaseModel):
 class BulkDeleteTicketRequest(BaseModel):
     id: int
 
+
 class TicketAssignedEvent(BaseModel):
     ticket_id: int
     ticket_title: str
@@ -81,5 +85,3 @@ class TicketAssignedEvent(BaseModel):
     assigned_by_id: int | None = None
     assigned_at: datetime
     message_id: str = Field(..., min_length=1)
-
-

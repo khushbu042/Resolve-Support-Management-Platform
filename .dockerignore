@@ -2,9 +2,13 @@
 __pycache__/
 *.py[cod]
 .git
+.github
 .env
 .pytest_cache/
 .mypy_cache/
+tests/
+htmlcov/
+.coverage
 
 # Docker artifacts
 Dockerfile

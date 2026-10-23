@@ -2,8 +2,9 @@ import logging
 import smtplib
 from email.message import EmailMessage
 
-from app.core.settings import get_settings
 import structlog
+
+from app.core.settings import get_settings
 
 settings = get_settings()
 
@@ -16,6 +17,7 @@ SMTP_USER = settings.smtp_user
 SMTP_PASSWORD = settings.smtp_password
 SMTP_USE_TLS = settings.smtp_use_tls
 SMTP_FROM = settings.smtp_from
+
 
 def send_email(to_email: str, subject: str, body: str) -> None:
     if not SMTP_HOST:

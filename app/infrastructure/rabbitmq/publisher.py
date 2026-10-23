@@ -4,6 +4,7 @@ from uuid import uuid4
 import aio_pika
 from aio_pika import DeliveryMode, Message
 
+from app.api.schemas.ticket import TicketAssignedEvent
 from app.core.settings import get_settings
 from app.infrastructure.rabbitmq.serializer import dumps
 from app.infrastructure.rabbitmq.topology import (
@@ -13,7 +14,6 @@ from app.infrastructure.rabbitmq.topology import (
 )
 from app.models.ticket_model import Ticket
 from app.models.user_model import User
-from app.api.schemas.ticket import TicketAssignedEvent
 
 settings = get_settings()
 RABBITMQ_URL = settings.rabbitmq_url

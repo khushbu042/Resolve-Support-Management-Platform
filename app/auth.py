@@ -4,12 +4,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.permissions import Permission, ROLE_PERMISSIONS
+from app.core.permissions import ROLE_PERMISSIONS, Permission
 from app.core.security import decode_access_token
 from app.core.token_blacklist import is_token_revoked
 from app.db.database import get_db
 from app.models.user_model import User
-
 
 security = HTTPBearer()
 
@@ -45,8 +44,8 @@ def require_permission(*required: Permission):
         user_permissions = ROLE_PERMISSIONS.get(current_user.role.value, set())
         if not set(required).issubset(user_permissions):
             raise HTTPException(
-                status_code=403,
-                detail=f"Missing required permission(s): {required}"
+                status_code=403, detail=f"Missing required permission(s): {required}"
             )
         return current_user
+
     return checker

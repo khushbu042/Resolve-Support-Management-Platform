@@ -1,11 +1,13 @@
 # app/api/schemas/health.py
-from pydantic import BaseModel
-from typing import Literal
 from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel
 
 
 class HealthResponse(BaseModel):
     """Response model for the basic health check endpoint."""
+
     status: Literal["healthy", "unhealthy"]
     app_name: str
     version: str
@@ -15,6 +17,7 @@ class HealthResponse(BaseModel):
 
 class ComponentStatus(BaseModel):
     """Status of a single system component."""
+
     name: str
     status: Literal["healthy", "degraded", "unhealthy"]
     details: str = ""
@@ -22,6 +25,7 @@ class ComponentStatus(BaseModel):
 
 class ReadinessResponse(BaseModel):
     """Response model for the readiness check endpoint."""
+
     status: Literal["ready", "not_ready"]
     components: list[ComponentStatus]
     timestamp: datetime
@@ -29,6 +33,7 @@ class ReadinessResponse(BaseModel):
 
 class ErrorDetail(BaseModel):
     """Structured error response."""
+
     message: str
     error_type: str = ""
     request_id: str = ""
@@ -38,4 +43,5 @@ class ErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Top-level error response wrapper."""
+
     error: ErrorDetail

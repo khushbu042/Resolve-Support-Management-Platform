@@ -5,13 +5,20 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile
-from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session, joinedload, selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.infrastructure.rabbitmq.publisher import publish_ticket_assigned
-from fastapi.responses import StreamingResponse
-from app.models.user_model import User
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session, joinedload, selectinload
+
+from app.api.schemas.common import MessageResponse
+from app.api.schemas.ticket import (
+    AssignTicketRequest,
+    CreateTicketRequest,
+    TicketResponse,
+    UpdateTicketRequest,
+)
+from app.core.permissions import Permission
+from app.infrastructure.rabbitmq.publisher import publish_ticket_assigned
 from app.models.ticket_model import (
     AttachmentStatus,
     Ticket,
@@ -20,26 +27,15 @@ from app.models.ticket_model import (
     TicketStatus,
 )
 from app.models.user_model import User
-from app.api.schemas.ticket import (
-    CreateTicketRequest,
-    UpdateTicketRequest,
-    AssignTicketRequest,
-    TicketResponse,
-)
-from app.core.permissions import Permission
-from app.api.schemas.common import MessageResponse
 
 UPLOAD_DIR = Path("app/uploads/tickets")
 
 logger = logging.getLogger(__name__)
 
+
 async def create_ticket(
-    ticket: CreateTicketRequest, 
-    user_permission, 
-    current_user: User, 
-    db: AsyncSession
+    ticket: CreateTicketRequest, user_permission, current_user: User, db: AsyncSession
 ):
-    
     new_ticket = Ticket(
         title=ticket.title,
         description=ticket.description,
@@ -61,6 +57,7 @@ async def create_ticket(
         customer_id=new_ticket.customer_id,
     )
 
+
 async def assign_ticket(
     ticket_id: int,
     assignee: AssignTicketRequest,
@@ -78,9 +75,11 @@ async def assign_ticket(
 
     # optional but recommended: only allow assigning to users with an "agent"/"admin" role
     if assignee_user.role not in ("agent", "admin"):
-        raise HTTPException(status_code=400, detail="User is not eligible to be assigned tickets")
+        raise HTTPException(
+            status_code=400, detail="User is not eligible to be assigned tickets"
+        )
 
-    ticket.assigned_agent_id= assignee.assignee
+    ticket.assigned_agent_id = assignee.assignee
 
     if ticket.status == TicketStatus.open:
         ticket.status = TicketStatus.pending
@@ -89,7 +88,9 @@ async def assign_ticket(
     await db.refresh(ticket)
 
     try:
-        await publish_ticket_assigned(ticket, assignee_user, assigned_by_id=assignee.assignee)
+        await publish_ticket_assigned(
+            ticket, assignee_user, assigned_by_id=assignee.assignee
+        )
     except Exception:
         logger.exception(
             "Ticket %s assigned but notification event was not published",
@@ -97,6 +98,7 @@ async def assign_ticket(
         )
 
     return ticket
+
 
 async def update_ticket(
     ticket_id: int,
@@ -114,7 +116,8 @@ async def update_ticket(
     if owner_only:
         if existing_ticket.customer_id != current_user.id:
             raise HTTPException(
-                status_code=403, detail="You don't have permission to update this ticket."
+                status_code=403,
+                detail="You don't have permission to update this ticket.",
             )
 
     update_data = ticket_update.model_dump(exclude_unset=True)
@@ -134,11 +137,8 @@ async def update_ticket(
 
     return existing_ticket
 
-async def delete_ticket(
-    ticket_id: int, 
-    user_permission: Permission, 
-    db: AsyncSession
-):
+
+async def delete_ticket(ticket_id: int, user_permission: Permission, db: AsyncSession):
     ticket = await db.execute(select(Ticket).filter(Ticket.id == ticket_id))
     ticket = ticket.scalar_one_or_none()
 
@@ -150,17 +150,13 @@ async def delete_ticket(
 
     return MessageResponse(message="Ticket deleted successfully")
 
+
 async def get_all_tickets(
-    page, 
-    limit, 
-    sort_by, 
-    order, 
-    user_permission, 
-    db: AsyncSession
+    page, limit, sort_by, order, user_permission, db: AsyncSession
 ):
     """
-        Fetch all tickets across customers for authorized administrators
-        and agents, with pagination and sorting.
+    Fetch all tickets across customers for authorized administrators
+    and agents, with pagination and sorting.
     """
 
     # Define allowed sorting fields.
@@ -169,7 +165,7 @@ async def get_all_tickets(
         "priority": Ticket.priority,
         "created_at": Ticket.created_at,
     }
-    
+
     allowed_orders = {"asc", "desc"}
     if sort_by not in allowed_sort_fields:
         raise HTTPException(status_code=400, detail="Invalid sort field")
@@ -177,7 +173,7 @@ async def get_all_tickets(
     if order not in allowed_orders:
         raise HTTPException(status_code=400, detail="Invalid order field")
 
-    # Calculate offset for pagination.      
+    # Calculate offset for pagination.
     offset = (page - 1) * limit
 
     # Build the base query for all tickets.
@@ -186,16 +182,11 @@ async def get_all_tickets(
     # Apply sorting.
     sort_column = allowed_sort_fields[sort_by]
 
-    sort_expression = (
-        sort_column.asc()
-        if order == "asc"
-        else sort_column.desc()
-    )
+    sort_expression = sort_column.asc() if order == "asc" else sort_column.desc()
 
     # Add a secondary sort for predictable pagination.
     ticket_query = (
-        base_query
-        .options(
+        base_query.options(
             selectinload(Ticket.customer),
             selectinload(Ticket.assigned_agent),
         )
@@ -313,41 +304,41 @@ async def get_all_tickets(
 #     current_user: User,
 #     db: Session,
 # ):
-    # if not delete_tickets:
-    #     raise HTTPException(
-    #         status_code=400, detail=" At least one ticket is required to delete"
-    #     )
+# if not delete_tickets:
+#     raise HTTPException(
+#         status_code=400, detail=" At least one ticket is required to delete"
+#     )
 
-    # unique_delete_ids = {ticket.id for ticket in delete_tickets}
+# unique_delete_ids = {ticket.id for ticket in delete_tickets}
 
-    # db_tickets = db.query(Ticket).filter(Ticket.id.in_(unique_delete_ids)).all()
+# db_tickets = db.query(Ticket).filter(Ticket.id.in_(unique_delete_ids)).all()
 
-    # db_ticket_ids = {ticket.id for ticket in db_tickets}
+# db_ticket_ids = {ticket.id for ticket in db_tickets}
 
-    # missing_ids = unique_delete_ids - db_ticket_ids
+# missing_ids = unique_delete_ids - db_ticket_ids
 
-    # if missing_ids:
-    #     raise HTTPException(
-    #         status_code=404, detail=f"Tickets not found: {list(missing_ids)}"
-    #     )
+# if missing_ids:
+#     raise HTTPException(
+#         status_code=404, detail=f"Tickets not found: {list(missing_ids)}"
+#     )
 
-    # for ticket in db_tickets:
-    #     if ticket.customer_id != current_user.id:
-    #         raise HTTPException(
-    #             status_code=403,
-    #             detail="Not authorized to delete one or more tickets",
-    #         )
+# for ticket in db_tickets:
+#     if ticket.customer_id != current_user.id:
+#         raise HTTPException(
+#             status_code=403,
+#             detail="Not authorized to delete one or more tickets",
+#         )
 
-    # deleted_count = (
-    #     db.query(Ticket)
-    #     .filter(Ticket.id.in_(unique_delete_ids))
-    #     .delete(synchronize_session=False)
-    # )
+# deleted_count = (
+#     db.query(Ticket)
+#     .filter(Ticket.id.in_(unique_delete_ids))
+#     .delete(synchronize_session=False)
+# )
 
-    # try:
-    #     db.commit()
-    # except Exception:
-    #     db.rollback()
-    #     raise
+# try:
+#     db.commit()
+# except Exception:
+#     db.rollback()
+#     raise
 
-    # return {"message": f"{deleted_count} tickets deleted successfully"}
+# return {"message": f"{deleted_count} tickets deleted successfully"}

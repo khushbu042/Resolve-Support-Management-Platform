@@ -1,12 +1,22 @@
-from sqlalchemy import (
-    Column, Integer, String, Text, Boolean, 
-    ForeignKey, DateTime, Enum, BigInteger
-)
-from datetime import datetime
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from sqlalchemy.sql import func
-from app.db.database import Base
 import enum
+from datetime import datetime
+
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.db.database import Base
+
 
 # ── Ticket status ───────────────────────────────────────────────
 class TicketStatus(str, enum.Enum):
@@ -15,6 +25,7 @@ class TicketStatus(str, enum.Enum):
     resolved = "resolved"
     closed = "closed"
 
+
 # ── Ticket priority ───────────────────────────────────────────────
 class TicketPriority(str, enum.Enum):
     low = "low"
@@ -22,12 +33,14 @@ class TicketPriority(str, enum.Enum):
     high = "high"
     urgent = "urgent"
 
+
 # ── Attachment status ───────────────────────────────────────────────
 class AttachmentStatus(str, enum.Enum):
     uploading = "uploading"
     scanning = "scanning"
     ready = "ready"
     rejected = "rejected"
+
 
 # ── Ticket model ───────────────────────────────────────────────
 class Ticket(Base):
@@ -106,6 +119,7 @@ class Ticket(Base):
         cascade="all, delete-orphan",
     )
 
+
 # ---------- TICKET COMMENT ----------
 class TicketComment(Base):
     __tablename__ = "ticket_comments"
@@ -138,20 +152,12 @@ class TicketComment(Base):
         nullable=False,
     )
 
-    ticket: Mapped["Ticket"] = relationship(
-        "Ticket",
-        back_populates="comments"
-    )
+    ticket: Mapped["Ticket"] = relationship("Ticket", back_populates="comments")
 
-    sender = relationship(
-        "User",
-        back_populates="comments"
-    )
+    sender = relationship("User", back_populates="comments")
 
     attachments = relationship(
-        "TicketAttachment",
-        back_populates="comment",
-        cascade="all, delete-orphan"
+        "TicketAttachment", back_populates="comment", cascade="all, delete-orphan"
     )
 
 
@@ -184,22 +190,22 @@ class TicketAttachment(Base):
         nullable=False,
         index=True,
     )
-    
+
     file_name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
     )
-    
+
     file_url: Mapped[str] = mapped_column(
         String(2048),
         nullable=False,
     )
-    
+
     file_type: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
     )
-    
+
     file_size: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -222,4 +228,3 @@ class TicketAttachment(Base):
     ticket = relationship("Ticket", back_populates="attachments")
     comment = relationship("TicketComment", back_populates="attachments")
     uploader = relationship("User", back_populates="attachments")
-

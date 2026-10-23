@@ -1,29 +1,50 @@
-name: CI
+name: Continuous Integration & Deployment
 
 on:
   push:
     branches:
       - master
-
+      - main
   pull_request:
     branches:
       - master
+      - main
 
 jobs:
   test:
+    name: Lint and Test
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
+    # 2. Set up Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+    # 3. Install uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
 
-      - name: Run tests
-        run: pytest
+    # 4. Install project dependencies
+      - name: Install dependencies
+        run: uv sync --locked
+
+    # 5. check import sorting
+      - name: Check import sorting with isort
+        run: uv run isort --check-only --diff .
+
+    # 6. check formatting with black
+      - name: Check formatting with black
+        run: uv run black --check --diff .
+
+    # 7. Run automated tests
+      - name: Run pytest
+        run: uv run pytest
+    

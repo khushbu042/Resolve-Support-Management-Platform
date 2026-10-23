@@ -1,12 +1,14 @@
+from functools import lru_cache
+
 import boto3
 from botocore.exceptions import ClientError
-from functools import lru_cache
 
 from app.core.settings import get_settings
 
 settings = get_settings()
 AWS_REGION = settings.s3_region
 BUCKET_NAME = settings.s3_bucket_name
+
 
 @lru_cache(maxsize=1)
 def get_s3_client():
@@ -24,6 +26,7 @@ async def upload_file(file: str, object_key: str):
         object_key,
     )
 
+
 async def download_file(object_key: str, file_path: str):
     s3_client = get_s3_client()
     await s3_client.download_file(
@@ -31,6 +34,7 @@ async def download_file(object_key: str, file_path: str):
         object_key,
         file_path,
     )
+
 
 async def get_file(object_key: str):
     s3_client = get_s3_client()
@@ -55,6 +59,7 @@ async def delete_file(object_key: str):
         Bucket=BUCKET_NAME,
         Key=object_key,
     )
+
 
 async def generate_download_url(object_key: str, expires_in: int = 3600):
     s3_client = get_s3_client()

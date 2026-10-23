@@ -1,9 +1,10 @@
 # app/core/settings.py
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
 from functools import lru_cache
 from typing import Literal
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,7 +24,7 @@ class Settings(BaseSettings):
     # ── Application ───────────────────────────────────────────
     app_name: str = "Resolve Support Management"
     app_version: str = "1.0.0"
-    app_description: str =  "Support Management is a platform for managing support tickets and resolving issues."
+    app_description: str = "Support Management is a platform for managing support tickets and resolving issues."
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
 
@@ -40,7 +41,6 @@ class Settings(BaseSettings):
     )
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
-
 
     # ── Redis ────────────────────────────────────────────────
     redis_url: str = Field(
@@ -142,7 +142,6 @@ class Settings(BaseSettings):
         alias="CHUNK_SIZE",
     )
 
-    
     # ── Database URL Normalization ───────────────────────────
     def model_post_init(self, __context) -> None:
         """

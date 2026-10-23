@@ -1,6 +1,13 @@
+from app.models.ticket_model import (
+    AttachmentStatus,
+    Ticket,
+    TicketAttachment,
+    TicketComment,
+    TicketPriority,
+    TicketStatus,
+)
 from app.models.user_model import User, UserRole
-from app.models.ticket_model import Ticket, TicketStatus, TicketPriority, TicketComment, TicketAttachment, AttachmentStatus
-            
+
 __all__ = [
     "User",
     "UserRole",

@@ -1,19 +1,24 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.auth import Permission, get_current_user, require_permission
-from app.db.database import get_db
-from app.services.ticket_attachments_service import upload_attachment, get_ticket_attachments, download_attachment
-from app.models.user_model import User
+
 from app.api.schemas.ticket import (
     TicketAttachmentDownloadResponse,
     TicketAttachmentResponse,
+)
+from app.auth import Permission, get_current_user, require_permission
+from app.db.database import get_db
+from app.models.user_model import User
+from app.services.ticket_attachments_service import (
+    download_attachment,
+    get_ticket_attachments,
+    upload_attachment,
 )
 
 router = APIRouter(prefix="/tickets/attachments", tags=["Ticket Attachments"])
 
 
 @router.post(
-   "/{ticket_id}",
+    "/{ticket_id}",
     summary="Any user can upload a file to a ticket",
     description="Any user can upload a file to a ticket with the given details",
     response_model=TicketAttachmentResponse,
@@ -38,7 +43,7 @@ async def get_ticket_attachments_api(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-   return await get_ticket_attachments(ticket_id, current_user, db)
+    return await get_ticket_attachments(ticket_id, current_user, db)
 
 
 @router.get(

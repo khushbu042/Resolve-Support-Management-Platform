@@ -1,27 +1,23 @@
 import time
 import uuid
 from contextlib import asynccontextmanager
-import structlog
 
+import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.core.settings import get_settings
-
-from app.core.logging import setup_logging
-from app.db.database import close_database, connect_database
-from app.db.redis_client import close_redis, check_redis_connection
-from app.infrastructure.rabbitmq.rabbitmq_client import close_rabbitmq, check_rabbitmq_connection
-
-
-# ── Routers imports ───────────────────────────────────────────────
-from app.api.v1.routers import health
-from app.api.v1.routers import auth
 # from app.api.v1.routers import user
-from app.api.v1.routers import ticket
-from app.api.v1.routers import ticket_attachments
-
+# ── Routers imports ───────────────────────────────────────────────
+from app.api.v1.routers import auth, health, ticket, ticket_attachments
+from app.core.logging import setup_logging
+from app.core.settings import get_settings
+from app.db.database import close_database, connect_database
+from app.db.redis_client import check_redis_connection, close_redis
+from app.infrastructure.rabbitmq.rabbitmq_client import (
+    check_rabbitmq_connection,
+    close_rabbitmq,
+)
 
 logger = structlog.get_logger()
 settings = get_settings()
@@ -33,7 +29,7 @@ async def lifespan(app: FastAPI):
     Application startup and shutdown.
     Infrastructure connections are checked and released here.
     """
- 
+
     logger.info("Application starting")
 
     # ── Startup: Connect infrastructure services ────────────────────────────────
@@ -67,6 +63,8 @@ async def lifespan(app: FastAPI):
     await close_rabbitmq()
 
     logger.info("All infrastructure connections closed")
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
@@ -90,7 +88,6 @@ def create_app() -> FastAPI:
             "X-Process-Time-Ms",
         ],
     )
-
 
     # ── Routers ───────────────────────────────────────────────
     app.include_router(health.router, prefix="/api/v1")

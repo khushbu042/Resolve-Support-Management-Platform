@@ -6,20 +6,21 @@ We use async SQLAlchemy so database queries never block the event loop.
 This is critical for a FastAPI application that needs to handle
 many concurrent requests.
 """
+import structlog
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
-    AsyncSession,
     AsyncEngine,
-    create_async_engine,
+    AsyncSession,
     async_sessionmaker,
+    create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import text
-import structlog
 
 from app.core.settings import get_settings
 
 logger = structlog.get_logger()
+
 
 # ── Base class for all database models ───────────────────────
 class Base(DeclarativeBase):
@@ -27,6 +28,7 @@ class Base(DeclarativeBase):
     All SQLAlchemy models inherit from this.
     Gives us .metadata for creating/dropping tables.
     """
+
     pass
 
 
@@ -45,10 +47,10 @@ def get_engine() -> AsyncEngine:
         _engine = create_async_engine(
             settings.database_url,
             # Connection pool settings
-            pool_size=5,          # Keep 5 connections ready
-            max_overflow=10,      # Allow 10 more if needed
-            pool_timeout=30,      # Wait max 30s for a connection
-            pool_recycle=1800,    # Recycle connections every 30 min
+            pool_size=5,  # Keep 5 connections ready
+            max_overflow=10,  # Allow 10 more if needed
+            pool_timeout=30,  # Wait max 30s for a connection
+            pool_recycle=1800,  # Recycle connections every 30 min
             echo=settings.debug,  # Log SQL in debug mode
         )
         logger.info("Database engine created")
@@ -122,6 +124,7 @@ async def close_database() -> None:
         logger.info("Database connections closed")
     _engine = None
     _session_factory = None
+
 
 async def get_db() -> AsyncSession:
     """Get a database session."""

@@ -1,13 +1,10 @@
 # app/api/v1/routers/health.py
-from fastapi import APIRouter
 from datetime import datetime, timezone
-import structlog
 
-from app.api.schemas.health import (
-    HealthResponse,
-    ReadinessResponse,
-    ComponentStatus,
-)
+import structlog
+from fastapi import APIRouter
+
+from app.api.schemas.health import ComponentStatus, HealthResponse, ReadinessResponse
 from app.core.settings import get_settings
 from app.db.database import check_database_connection
 from app.db.redis_client import check_redis_connection
@@ -55,44 +52,52 @@ async def readiness_check() -> ReadinessResponse:
 
     # ── Check 1: Configuration ────────────────────────────────
     app_name_ok = bool(settings.app_name)
-    components.append(ComponentStatus(
-        name="configuration",
-        status="healthy" if app_name_ok else "unhealthy",
-        details=(
-            f"App Name: {settings.app_name} | "
-            f"Environment: {settings.environment}"
-        ),
-    ))
+    components.append(
+        ComponentStatus(
+            name="configuration",
+            status="healthy" if app_name_ok else "unhealthy",
+            details=(
+                f"App Name: {settings.app_name} | "
+                f"Environment: {settings.environment}"
+            ),
+        )
+    )
     if not app_name_ok:
         all_ready = False
 
     # ── Check 2: PostgreSQL ───────────────────────────────────
     db_ok, db_detail = await check_database_connection()
-    components.append(ComponentStatus(
-        name="postgresql",
-        status="healthy" if db_ok else "unhealthy",
-        details=db_detail,
-    ))
+    components.append(
+        ComponentStatus(
+            name="postgresql",
+            status="healthy" if db_ok else "unhealthy",
+            details=db_detail,
+        )
+    )
     if not db_ok:
         all_ready = False
 
     # ── Check 3: Redis ────────────────────────────────────────
     redis_ok, redis_detail = await check_redis_connection()
-    components.append(ComponentStatus(
-        name="redis",
-        status="healthy" if redis_ok else "unhealthy",
-        details=redis_detail,
-    ))
+    components.append(
+        ComponentStatus(
+            name="redis",
+            status="healthy" if redis_ok else "unhealthy",
+            details=redis_detail,
+        )
+    )
     if not redis_ok:
         all_ready = False
 
     # # ── Check 4: RabbitMQ ───────────────────────────────────────
     rabbitmq_ok, rabbitmq_detail = await check_rabbitmq_connection()
-    components.append(ComponentStatus(
-        name="rabbitmq",
-        status="healthy" if rabbitmq_ok else "unhealthy",
-        details=rabbitmq_detail,
-    ))
+    components.append(
+        ComponentStatus(
+            name="rabbitmq",
+            status="healthy" if rabbitmq_ok else "unhealthy",
+            details=rabbitmq_detail,
+        )
+    )
     if not rabbitmq_ok:
         all_ready = False
 

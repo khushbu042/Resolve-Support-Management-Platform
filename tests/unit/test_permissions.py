@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.permissions import Permission, ROLE_PERMISSIONS
+from app.core.permissions import ROLE_PERMISSIONS, Permission
 
 
 def test_customer_can_create_and_update_own_ticket():
@@ -9,6 +9,7 @@ def test_customer_can_create_and_update_own_ticket():
     assert Permission.TICKET_CREATE in customer_permissions
     assert Permission.TICKET_UPDATE_OWN in customer_permissions
     assert Permission.TICKET_DELETE not in customer_permissions
+
 
 @pytest.mark.parametrize("role", ["agent", "admin"])
 def test_staff_roles_can_read_all_tickets(role):
